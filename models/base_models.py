@@ -77,9 +77,10 @@ class NCModel(BaseModel):
     def compute_metrics(self, embeddings, data, split):
         idx = data[f'idx_{split}']
         output = self.decode(embeddings, data['adj_train_norm'], idx)
-        t = torch.tensor(np.repeat([0,1], output.shape[0]/2), dtype=torch.int64)
+        t = torch.tensor(np.repeat([0,1], output.shape[0]/2).flatten(), dtype=torch.int64)
         loss = F.nll_loss(output, t, self.weights) #data['labels'][idx]
-        acc, f1 = acc_f1(output, t, average=self.f1_average)
+        #print(self.weights[0].item())
+        acc, f1 = acc_f1(output, t, average='binary')
         metrics = {'loss': loss, 'acc': acc, 'f1': f1}
         return metrics
 
@@ -115,12 +116,14 @@ class RModel(BaseModel):
     def compute_metrics(self, embeddings, data, split):
         idx = data[f'idx_{split}']
         output = self.decode(embeddings, data['adj_train_norm'], idx)
-        t = torch.tensor(np.repeat([0,1], output.shape[0]/2), dtype=torch.float32)
-        t = t.unsqueeze(1)
+        # t = torch.tensor(np.repeat([0,1], output.shape[0]/2).flatten(), dtype=torch.float32)
+        # t = t.unsqueeze(1)
         #print(output[503].shape)
         #print(t.shape)
-        loss = F.binary_cross_entropy_with_logits(output, t, self.weights)
-        acc, f1 = acc_f1(output, t, average=self.f1_average)
+        loss = F.nll_loss(output, data['labels'][idx], self.weights)
+        #print(self.weights)
+        #loss = F.mse_loss(output, t)
+        acc, f1 = acc_f1(output, data['labels'][idx], average=self.f1_average)
         metrics = {'loss': loss, 'acc': acc, 'f1': f1}
         return metrics
 

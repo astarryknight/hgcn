@@ -160,7 +160,8 @@ def load_data_nc(dataset, use_feats, data_path, split_seed):
             val_prop, test_prop = 0.15, 0.15
         elif dataset == 'camcan_nc':
             adj, features, labels = load_camcan(dataset, data_path, 0.36)
-            print(adj)
+            # print(adj)
+            # print(labels)
             val_prop, test_prop = 0.15, 0.15
         else:
             raise FileNotFoundError('Dataset {} is not supported.'.format(dataset))
@@ -226,7 +227,8 @@ def load_camcan(dataset_str, data_path, threshold):
         #print(features)
     else:
         features = sp.eye(adj.shape[0])
-    labels = np.load(os.path.join(data_path, "{}.labels.npy".format(dataset_str)))
+    #labels = np.load(os.path.join(data_path, "{}.labels.npy".format(dataset_str)))
+    labels=np.repeat([0,1],360/2).flatten()
     #print(f'this is it {labels}')
     return sp.csr_matrix(adj), features, labels
 
