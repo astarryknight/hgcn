@@ -10,7 +10,7 @@ import torch
 
 
 def load_data(args, datapath):
-    if args.task == 'nc':
+    if args.task == 'nc' or args.task == 'reg':
         data = load_data_nc(args.dataset, args.use_feats, datapath, args.split_seed)
     else:
         data = load_data_lp(args.dataset, args.use_feats, datapath)
@@ -153,7 +153,7 @@ def load_data_nc(dataset, use_feats, data_path, split_seed):
         )
     else:
         if dataset == 'disease_nc':
-            adj, features, labels = load_synthetic_data(dataset, use_feats, data_path)
+            adj, features, labels = load_synthetic_data(dataset, False, data_path) #use_feats instead of False
             val_prop, test_prop = 0.10, 0.60
         elif dataset == 'airport':
             adj, features, labels = load_data_airport(dataset, data_path, return_label=True)

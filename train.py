@@ -12,7 +12,7 @@ import numpy as np
 import optimizers
 import torch
 from config import parser
-from models.base_models import NCModel, LPModel
+from models.base_models import NCModel, LPModel, RModel
 from utils.data_utils import load_data
 from utils.train_utils import get_dir_name, format_metrics
 
@@ -49,6 +49,10 @@ def train(args):
     args.n_nodes, args.feat_dim = data['features'].shape
     if args.task == 'nc':
         Model = NCModel
+        args.n_classes = int(data['labels'].max() + 1)
+        logging.info(f'Num classes: {args.n_classes}')
+    elif args.task == 'reg':
+        Model = RModel
         args.n_classes = int(data['labels'].max() + 1)
         logging.info(f'Num classes: {args.n_classes}')
     else:
