@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
 from torch.nn.modules.module import Module
+import numpy as np
 
 from layers.att_layers import DenseAtt
 
@@ -148,6 +149,9 @@ class HypAgg(Module):
                 adj_att = self.att(x_tangent, adj)
                 support_t = torch.matmul(adj_att, x_tangent)
         else:
+            #print(np.array(torch.Tensor.dense(adj)).shape)
+            #print(np.array(adj).shape)
+            #print(np.array(torch.Tensor.to_dense(adj)).shape)
             support_t = torch.spmm(adj, x_tangent)
         output = self.manifold.proj(self.manifold.expmap0(support_t, c=self.c), c=self.c)
         return output

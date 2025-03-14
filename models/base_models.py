@@ -71,12 +71,60 @@ class NCModel(BaseModel):
             self.weights = self.weights.to(args.device)
 
     def decode(self, h, adj, idx):
+        print('ehhls')
+        print(h)
         output = self.decoder.decode(h, adj)
+        #print(F.log_softmax(output[idx], dim=1)[1].values)
+        return F.log_softmax(output[idx], dim=1)
+
+    def compute_metrics(self, embeddings, data, split):
+        #print(data)
+        idx = data[f'idx_{split}']
+        output = self.decode(embeddings, data['adj_train_norm'], idx)
+        #print(output)
+        #print(data['labels'])
+        t = torch.tensor(np.repeat(0.8, output.shape[0]), dtype=torch.int64)
+        print(output.shape[0])
+        print(output[0])
+        print(t.dtype)
+        loss = F.nll_loss(output, t, self.weights)
+        acc, f1 = acc_f1(output, data['labels'][idx], average=self.f1_average)
+        metrics = {'loss': loss, 'acc': acc, 'f1': f1}
+        return metrics
+
+    def init_metric_dict(self):
+        return {'acc': -1, 'f1': -1}
+
+    def has_improved(self, m1, m2):
+        return m1["f1"] < m2["f1"]
+    
+class RegModel(BaseModel):
+    """
+    Base Model for Regression Tasks
+    """
+    def __init__(self, args):
+        super(NCModel, self).__init__(args)
+        self.decoder = model2decoder[args.model](self.c, args)
+        if args.n_classes > 2:
+            self.f1_average = 'micro'
+        else:
+            self.f1_average = 'binary'
+        if args.pos_weight:
+            self.weights = torch.Tensor([1., 1. / data['labels'][idx_train].mean()])
+        else:
+            self.weights = torch.Tensor([1.] * args.n_classes)
+        if not args.cuda == -1:
+            self.weights = self.weights.to(args.device)
+
+    def decode(self, h, adj, idx):
+        output = self.decoder.decode(h, adj)
+        #add a FC layer in the decoder 
         return F.log_softmax(output[idx], dim=1)
 
     def compute_metrics(self, embeddings, data, split):
         idx = data[f'idx_{split}']
         output = self.decode(embeddings, data['adj_train_norm'], idx)
+        #loss = F.mse_loss(output, data['labels'][idx], self.weights)
         loss = F.nll_loss(output, data['labels'][idx], self.weights)
         acc, f1 = acc_f1(output, data['labels'][idx], average=self.f1_average)
         metrics = {'loss': loss, 'acc': acc, 'f1': f1}

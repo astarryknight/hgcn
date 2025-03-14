@@ -158,6 +158,10 @@ def load_data_nc(dataset, use_feats, data_path, split_seed):
         elif dataset == 'airport':
             adj, features, labels = load_data_airport(dataset, data_path, return_label=True)
             val_prop, test_prop = 0.15, 0.15
+        elif dataset == 'camcan_nc':
+            adj, features, labels = load_camcan(dataset, data_path, 0.36)
+            print(adj)
+            val_prop, test_prop = 0.15, 0.15
         else:
             raise FileNotFoundError('Dataset {} is not supported.'.format(dataset))
         idx_val, idx_test, idx_train = split_data(labels, val_prop, test_prop, seed=split_seed)
@@ -207,8 +211,27 @@ def parse_index_file(filename):
         index.append(int(line.strip()))
     return index
 
+def load_camcan(dataset_str, data_path, threshold):
+    data = np.load(f'{data_path}/plv_tensor_592_sbj_filtered.npy')
+    data=data[0,:,:]
+
+    #adj=np.zeros([360,360])
+    data [data == 1] = 0
+    data [data >= threshold] = 1
+    data [data <= threshold] = 0
+    adj = data
+
+    if (False):
+        features = sp.load_npz(os.path.join(data_path, "{}.feats.npz".format(dataset_str)))
+        #print(features)
+    else:
+        features = sp.eye(adj.shape[0])
+    labels = np.load(os.path.join(data_path, "{}.labels.npy".format(dataset_str)))
+    #print(f'this is it {labels}')
+    return sp.csr_matrix(adj), features, labels
 
 def load_synthetic_data(dataset_str, use_feats, data_path):
+    #might want to just generate adj matrix manually...
     object_to_idx = {}
     idx_counter = 0
     edges = []
@@ -235,6 +258,7 @@ def load_synthetic_data(dataset_str, use_feats, data_path):
         adj[j, i] = 1.
     if use_feats:
         features = sp.load_npz(os.path.join(data_path, "{}.feats.npz".format(dataset_str)))
+        #print(features)
     else:
         features = sp.eye(adj.shape[0])
     labels = np.load(os.path.join(data_path, "{}.labels.npy".format(dataset_str)))
